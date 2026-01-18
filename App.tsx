@@ -10,13 +10,14 @@ import {
   PhoneCall,
   Activity,
   History,
-  Info,
+  Terminal,
   ExternalLink,
   ChevronRight,
   Database,
   Cpu,
-  Globe,
-  Zap
+  Zap,
+  Layers,
+  FileText
 } from 'lucide-react';
 import { PhoneNumberRecord, ValidationStatus, ValidationSummary } from './types.ts';
 import { processBatch } from './services/geminiService.ts';
@@ -56,7 +57,7 @@ const App: React.FC = () => {
       .filter(n => n.length > 3);
 
     if (rawNumbers.length === 0) {
-      alert('Input signal stream is empty.');
+      alert('Command Buffer Empty: Please inject data into the console.');
       return;
     }
 
@@ -74,7 +75,7 @@ const App: React.FC = () => {
         const end = Math.min(start + BATCH_SIZE, rawNumbers.length);
         const chunk = rawNumbers.slice(start, end);
         
-        setCurrentBatchInfo(`Scanning Unit ${i + 1}/${totalBatches}`);
+        setCurrentBatchInfo(`AUDITING BLOCK: ${i + 1}/${totalBatches}`);
         
         const batchResults = await processBatch(chunk);
         setResults(prev => [...prev, ...batchResults]);
@@ -84,15 +85,15 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      setError('Signal disruption detected. Check connectivity.');
+      setError('SIGNAL DISRUPTION: System could not reach the intelligence core. Check connectivity.');
     } finally {
       setIsProcessing(false);
-      setCurrentBatchInfo('Global Audit Finalized');
+      setCurrentBatchInfo('AUDIT SEQUENCE COMPLETE');
     }
   };
 
   const handleClear = () => {
-    if (window.confirm('Purge all data streams?')) {
+    if (window.confirm('WARNING: Purge all session buffers and history?')) {
       setInputText('');
       setResults([]);
       setProgress(0);
@@ -103,22 +104,21 @@ const App: React.FC = () => {
   const handleSaveValidCsv = () => {
     const validRecords = results.filter(r => r.status === ValidationStatus.VALID);
     if (validRecords.length === 0) {
-      alert('No verified signals found to extract.');
+      alert('Error: No verified records found for extraction.');
       return;
     }
 
-    // Comprehensive data export including all details
     const headers = [
-      'Audit_ID', 
-      'Formatted_Phone_E164', 
-      'Original_Input', 
-      'Country_Region', 
-      'Security_Status', 
-      'AI_Detailed_Diagnosis',
-      'Extraction_Timestamp'
+      'Record_ID', 
+      'Formatted_E164', 
+      'Original_Raw', 
+      'Region_Detected', 
+      'Validation_Status', 
+      'Intelligence_Notes',
+      'Audit_Timestamp'
     ];
 
-    const timestamp = new Date().toLocaleString();
+    const timestamp = new Date().toISOString();
     
     const csvContent = [
       headers.join(','),
@@ -128,7 +128,7 @@ const App: React.FC = () => {
         `"${r.original.replace(/"/g, '""')}"`,
         `"${r.country}"`,
         `"${r.status}"`,
-        `"${(r.notes || 'Signal pattern verified successfully').replace(/"/g, '""')}"`,
+        `"${(r.notes || 'Pattern Verified').replace(/"/g, '""')}"`,
         `"${timestamp}"`
       ].join(','))
     ].join('\n');
@@ -137,64 +137,58 @@ const App: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `ER_Detailed_Audit_Report_${Date.now()}.csv`);
+    link.setAttribute('download', `ER_Verified_Audit_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#020617] text-slate-400 font-sans selection:bg-blue-600/40 antialiased">
-      {/* HUD Background - Deep Blue Theme */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[160px]"></div>
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[160px]"></div>
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.2] brightness-50 contrast-125"></div>
-      </div>
-
-      {/* Main Header */}
-      <header className="sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-3xl border-b border-white/5 px-8 py-6 shadow-2xl">
+    <div className="min-h-screen flex flex-col bg-[#020617] text-slate-400 font-sans selection:bg-blue-600/30">
+      
+      {/* Header HUD */}
+      <header className="sticky top-0 z-50 bg-[#0f172a]/80 backdrop-blur-xl border-b border-white/5 px-8 py-5">
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6 group">
             <div className="relative">
               <div className="absolute inset-0 bg-blue-600 blur-xl opacity-20 group-hover:opacity-60 transition-opacity animate-pulse"></div>
-              <div className="relative bg-gradient-to-br from-slate-700 to-slate-900 p-3 rounded-2xl shadow-2xl border border-white/10">
+              <div className="relative bg-slate-800 border border-white/10 p-3 rounded-2xl shadow-2xl">
                 <ShieldCheck className="text-blue-500 w-8 h-8" />
               </div>
             </div>
             <div>
               <h1 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-3">
-                ER <span className="text-red-600">VALIDATOR</span>
-                <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full not-italic tracking-[0.1em] font-bold">V3.0 PRO</span>
+                ER <span className="text-blue-500">INTELLIGENCE</span>
+                <span className="text-[10px] bg-blue-600/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full not-italic tracking-[0.2em] font-bold">V3.0 PRO</span>
               </h1>
               <div className="flex items-center gap-2 mt-2">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_12px_#22c55e]"></div>
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Signal Integrity: Active</span>
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></div>
+                <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Audit Grid: Online</span>
               </div>
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-6">
-            <div className="flex items-center gap-3 px-6 py-3 bg-white/[0.03] rounded-2xl border border-white/5 shadow-inner">
+          <div className="hidden lg:flex items-center gap-8">
+            <div className="flex items-center gap-3 px-6 py-3 bg-white/[0.02] rounded-2xl border border-white/5 shadow-inner">
                <Zap className="w-4 h-4 text-yellow-500" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Flash Scan</span>
+               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Turbo Core</span>
             </div>
-            <div className="flex items-center gap-3 px-6 py-3 bg-white/[0.03] rounded-2xl border border-white/5 shadow-inner">
+            <div className="flex items-center gap-3 px-6 py-3 bg-white/[0.02] rounded-2xl border border-white/5 shadow-inner">
                <Cpu className="w-4 h-4 text-blue-500" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Gemini Core</span>
+               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Gemini Neural Link</span>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Dashboard Body */}
-      <main className="flex-grow max-w-screen-2xl mx-auto w-full p-4 lg:p-12 flex flex-col xl:flex-row gap-12">
+      {/* Main Command Center */}
+      <main className="flex-grow max-w-screen-2xl mx-auto w-full p-6 lg:p-12 flex flex-col xl:flex-row gap-10">
         
-        {/* Left Control Panel */}
-        <section className="xl:w-[500px] flex flex-col gap-8 shrink-0">
-          <div className="bg-[#1e293b]/50 backdrop-blur-xl rounded-[40px] border border-white/10 p-10 shadow-2xl relative overflow-hidden transition-all hover:border-white/20 ring-1 ring-white/5">
+        {/* Input Terminal */}
+        <section className="xl:w-[480px] flex flex-col gap-8 shrink-0">
+          <div className="bg-slate-900/50 backdrop-blur-2xl rounded-[40px] border border-white/10 p-10 shadow-2xl relative overflow-hidden transition-all hover:border-white/20 ring-1 ring-white/5">
             <div className="absolute -top-10 -right-10 opacity-[0.03]">
-               <Database className="w-64 h-64 text-white" />
+               <Terminal className="w-64 h-64 text-white" />
             </div>
 
             <div className="flex items-center justify-between mb-8 relative">
@@ -204,13 +198,13 @@ const App: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-black text-white tracking-tight uppercase leading-none">Command Hub</h2>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Data Signal Injection</p>
+                  <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-2">Inject Signal Streams</p>
                 </div>
               </div>
               <button 
                 onClick={handleClear}
-                className="text-slate-500 hover:text-red-500 transition-all p-2 bg-white/5 rounded-xl border border-white/5 hover:border-red-500/30"
-                title="Purge Memory"
+                className="text-slate-600 hover:text-red-500 transition-all p-2 bg-white/5 rounded-xl border border-white/5"
+                title="Purge Buffers"
               >
                 <Trash2 className="w-6 h-6" />
               </button>
@@ -219,22 +213,22 @@ const App: React.FC = () => {
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Paste raw data streams (CSV, Newlines, Mixed Text)..."
-              className="w-full h-[480px] bg-[#020617]/60 border border-white/10 rounded-[32px] p-8 text-sm font-mono text-slate-300 placeholder:text-slate-700 focus:border-blue-600/50 focus:ring-[12px] focus:ring-blue-600/5 transition-all outline-none leading-relaxed shadow-inner"
+              placeholder="Paste raw data strings (CSV, Lists, Mixed text)..."
+              className="w-full h-[450px] bg-[#020617]/60 border border-white/10 rounded-[32px] p-8 text-sm mono text-slate-300 placeholder:text-slate-800 focus:border-blue-600/50 focus:ring-[12px] focus:ring-blue-600/5 transition-all outline-none leading-relaxed shadow-inner"
             />
 
             {isProcessing && (
               <div className="mt-8 p-6 bg-blue-600/5 rounded-[28px] border border-blue-500/10 backdrop-blur-sm">
-                <div className="flex justify-between items-center mb-4 text-[11px] font-black uppercase tracking-[0.3em]">
-                  <span className="text-slate-400 flex items-center gap-3">
+                <div className="flex justify-between items-center mb-4 text-[10px] font-black uppercase tracking-[0.3em]">
+                  <span className="text-slate-500 flex items-center gap-3">
                     <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                     {currentBatchInfo}
                   </span>
                   <span className="text-blue-500">{progress}%</span>
                 </div>
-                <div className="h-2.5 w-full bg-black/60 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 shadow-inner">
                   <div 
-                    className="h-full bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-400 transition-all duration-700 ease-out shadow-[0_0_25px_rgba(37,99,235,0.4)]"
+                    className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-700 ease-out shadow-[0_0_20px_rgba(37,99,235,0.3)]"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -244,130 +238,130 @@ const App: React.FC = () => {
             <button
               disabled={isProcessing || !inputText.trim()}
               onClick={handleProcess}
-              className={`w-full mt-10 py-6 rounded-[24px] flex items-center justify-center gap-4 font-black text-[11px] uppercase tracking-[0.5em] transition-all relative overflow-hidden group border ${
+              className={`w-full mt-8 py-6 rounded-[24px] flex items-center justify-center gap-4 font-black text-[11px] uppercase tracking-[0.5em] transition-all relative overflow-hidden group border ${
                 isProcessing || !inputText.trim()
-                ? 'bg-white/5 text-slate-700 border-white/5'
-                : 'bg-blue-600 text-white border-blue-500 hover:bg-blue-700 shadow-[0_20px_40px_rgba(37,99,235,0.2)] hover:-translate-y-1 active:scale-95'
+                ? 'bg-white/5 text-slate-800 border-white/5'
+                : 'bg-blue-600 text-white border-blue-400 hover:bg-blue-700 shadow-2xl hover:-translate-y-1 active:scale-95'
               }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
               {isProcessing ? <Activity className="w-6 h-6 animate-pulse" /> : <Zap className="w-6 h-6" />}
-              {isProcessing ? 'SCANNING...' : 'EXECUTE VERIFICATION'}
+              {isProcessing ? 'PROCESSING...' : 'ENGAGE AUDIT'}
             </button>
           </div>
 
-          {/* HUD Summary Cards */}
-          <div className="grid grid-cols-3 gap-6">
+          {/* Quick HUD Stats */}
+          <div className="grid grid-cols-3 gap-5">
             {[
-              { label: 'Units', value: summary.total, color: 'text-white' },
-              { label: 'Cleared', value: summary.valid, color: 'text-green-500' },
+              { label: 'Total', value: summary.total, color: 'text-white' },
+              { label: 'Valid', value: summary.valid, color: 'text-green-500' },
               { label: 'Null', value: summary.invalid, color: 'text-red-500' }
             ].map((stat) => (
-              <div key={stat.label} className="bg-[#1e293b]/50 backdrop-blur-md p-7 rounded-[32px] border border-white/10 shadow-2xl">
-                <span className="block text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">{stat.label}</span>
-                <span className={`text-3xl font-black ${stat.color} tracking-tighter`}>{stat.value}</span>
+              <div key={stat.label} className="bg-slate-900/50 p-6 rounded-[28px] border border-white/10 shadow-xl ring-1 ring-white/5 text-center">
+                <span className="block text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">{stat.label}</span>
+                <span className={`text-2xl font-black ${stat.color} tracking-tighter`}>{stat.value}</span>
               </div>
             ))}
           </div>
 
-          {/* Sub-Apps Node */}
-          <div className="bg-[#1e293b]/50 backdrop-blur-md rounded-[40px] p-10 border border-white/10 shadow-2xl">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.6em] mb-10 flex items-center gap-4">
-              <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-ping"></div>
-              ER Global Suite
+          {/* Registry Node */}
+          <div className="bg-slate-900/50 rounded-[40px] p-8 border border-white/10 shadow-xl">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em] mb-8 flex items-center gap-4">
+              <Layers className="w-4 h-4" />
+              Intelligence Grid
             </h3>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3">
               {ER_TOOLS.map(tool => (
                 <a 
                   key={tool.name} 
                   href={tool.url} 
                   target="_blank" 
-                  className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-blue-500/40 hover:bg-blue-600/10 transition-all group shadow-sm"
+                  className="flex items-center justify-between p-5 rounded-2xl bg-white/[0.01] border border-white/5 hover:border-blue-500/30 hover:bg-blue-600/5 transition-all group shadow-sm"
                 >
-                  <span className="text-[12px] font-black uppercase tracking-widest text-slate-500 group-hover:text-white transition-colors">{tool.name}</span>
-                  <ExternalLink className="w-5 h-5 text-slate-700 group-hover:text-blue-500 transition-colors" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-slate-700 group-hover:text-slate-400 transition-colors">{tool.name}</span>
+                  <ExternalLink className="w-4 h-4 text-slate-800 group-hover:text-blue-500 transition-colors" />
                 </a>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Audit Log Panel */}
-        <section className="flex-grow flex flex-col bg-[#0f172a]/50 backdrop-blur-xl rounded-[50px] border border-white/10 shadow-2xl overflow-hidden h-[950px] ring-1 ring-white/10 relative">
-          <div className="p-12 border-b border-white/10 flex items-center justify-between bg-[#0f172a]/80 backdrop-blur-3xl shrink-0 z-10">
+        {/* Audit Stream Panel */}
+        <section className="flex-grow flex flex-col bg-slate-900/50 rounded-[50px] border border-white/10 shadow-2xl overflow-hidden h-[950px] ring-1 ring-white/5 relative">
+          <div className="p-10 border-b border-white/10 flex items-center justify-between bg-black/20 shrink-0 backdrop-blur-3xl z-10">
             <div className="flex items-center gap-5">
-              <div className="p-4 bg-blue-600/10 rounded-[22px] border border-blue-600/30 shadow-inner">
+              <div className="p-4 bg-blue-600/10 rounded-[22px] border border-blue-600/20 shadow-inner">
                 <History className="w-7 h-7 text-blue-500" />
               </div>
               <div>
                 <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-none italic">Audit Feed</h2>
-                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.3em] mt-3">Live Signal Intelligence Analysis</p>
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.4em] mt-3">Live Signal Analysis Pipeline</p>
               </div>
             </div>
             
             {results.length > 0 && (
               <button 
                 onClick={handleSaveValidCsv}
-                className="bg-blue-600 text-white px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-4 hover:bg-blue-500 transition-all shadow-[0_25px_50px_rgba(37,99,235,0.2)] active:scale-95 hover:-translate-y-1"
+                className="bg-white text-slate-900 px-10 py-5 rounded-[22px] text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-4 hover:bg-slate-200 transition-all shadow-2xl active:scale-95 hover:-translate-y-1"
               >
                 <Download className="w-5 h-5" />
-                Download Full Log
+                Extract Verified Logs
               </button>
             )}
           </div>
 
           <div 
             ref={scrollRef}
-            className="flex-grow overflow-auto bg-[#020617]/30 custom-scrollbar p-4"
+            className="flex-grow overflow-auto bg-black/10 custom-scrollbar p-6"
           >
             {results.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center p-20 text-center relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 to-transparent blur-[150px] pointer-events-none"></div>
-                <div className="bg-white/[0.03] p-16 rounded-full mb-12 border border-white/10 shadow-inner">
-                   <PhoneCall className="w-28 h-28 text-slate-800" />
+                <div className="absolute inset-0 bg-gradient-to-b from-blue-600/5 to-transparent blur-[150px] pointer-events-none"></div>
+                <div className="bg-white/[0.02] p-16 rounded-full mb-12 border border-white/10 shadow-inner">
+                   <PhoneCall className="w-24 h-24 text-slate-800 opacity-20" />
                 </div>
-                <h3 className="text-4xl font-black uppercase tracking-[0.4em] text-slate-800">Awaiting Signal</h3>
-                <p className="max-w-md mt-8 text-sm font-bold leading-relaxed text-slate-700 uppercase tracking-widest">Connect data stream via the Command Hub to initiate audit protocols.</p>
+                <h3 className="text-3xl font-black uppercase tracking-[0.5em] text-slate-800">Standby Mode</h3>
+                <p className="max-w-md mt-6 text-xs font-bold leading-relaxed text-slate-700 uppercase tracking-widest">Connect signal data via Command Hub to initiate audit sequence.</p>
               </div>
             ) : (
-              <div className="min-w-full inline-block align-middle px-6">
+              <div className="min-w-full inline-block align-middle px-4">
                 <table className="min-w-full text-left border-separate border-spacing-y-4">
-                  <thead className="sticky top-0 z-10 bg-[#0f172a]/95 backdrop-blur-2xl">
+                  <thead className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur-3xl">
                     <tr>
-                      <th className="px-10 py-6 text-[11px] font-black text-slate-600 uppercase tracking-[0.3em]">Signal Origin</th>
-                      <th className="px-10 py-6 text-[11px] font-black text-slate-600 uppercase tracking-[0.3em]">Region Node</th>
-                      <th className="px-10 py-6 text-[11px] font-black text-slate-600 uppercase tracking-[0.3em] text-center">Status</th>
-                      <th className="px-10 py-6 text-[11px] font-black text-slate-600 uppercase tracking-[0.3em]">Audit Diagnosis</th>
+                      <th className="px-10 py-6 text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Signal Origin</th>
+                      <th className="px-10 py-6 text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Region Node</th>
+                      <th className="px-10 py-6 text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] text-center">Security Status</th>
+                      <th className="px-10 py-6 text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Intelligence Note</th>
                     </tr>
                   </thead>
                   <tbody>
                     {results.map((item) => (
-                      <tr key={item.id} className="bg-white/[0.04] border border-white/5 rounded-[32px] group hover:bg-blue-600/5 hover:border-blue-500/20 transition-all animate-in slide-in-from-bottom-4 duration-500">
-                        <td className="px-10 py-8 first:rounded-l-[32px] border-y border-l border-white/5">
-                          <div className="text-[15px] font-black text-white tracking-wide">{item.formatted}</div>
-                          <div className="text-[10px] text-slate-500 font-mono mt-2 uppercase opacity-60">ID: {item.id.split('-')[1]}</div>
+                      <tr key={item.id} className="bg-white/[0.02] border border-white/5 rounded-[28px] group hover:bg-blue-600/5 transition-all animate-in slide-in-from-bottom-4 duration-500">
+                        <td className="px-10 py-7 first:rounded-l-[28px] border-y border-l border-white/5">
+                          <div className="text-[14px] font-black text-white tracking-wide mono">{item.formatted}</div>
+                          <div className="text-[9px] text-slate-700 font-mono mt-2 uppercase opacity-60">AUDIT_LOG: {item.id.split('-')[1]}</div>
                         </td>
-                        <td className="px-10 py-8 border-y border-white/5">
-                          <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest bg-white/[0.05] px-4 py-2 rounded-xl border border-white/10 group-hover:border-blue-600/30 group-hover:text-slate-200 transition-all">
-                            {item.country || 'DETECTING...'}
+                        <td className="px-10 py-7 border-y border-white/5">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-white/[0.03] px-4 py-2 rounded-xl border border-white/10 group-hover:text-slate-300 transition-colors">
+                            {item.country || 'N/A'}
                           </span>
                         </td>
-                        <td className="px-10 py-8 border-y border-white/5 text-center">
+                        <td className="px-10 py-7 border-y border-white/5 text-center">
                           {item.status === ValidationStatus.VALID ? (
-                            <span className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] bg-green-500/10 text-green-500 border border-green-500/20 shadow-[0_0_30px_rgba(34,197,94,0.1)]">
+                            <span className="inline-flex items-center gap-3 px-6 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.3em] bg-green-500/10 text-green-500 border border-green-500/20 shadow-[0_0_25px_rgba(34,197,94,0.1)]">
                               <CheckCircle className="w-4 h-4" />
                               VERIFIED
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] bg-red-600/10 text-red-500 border border-red-600/30">
+                            <span className="inline-flex items-center gap-3 px-6 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.3em] bg-red-600/10 text-red-500 border border-red-600/30">
                               <XCircle className="w-4 h-4" />
                               REJECTED
                             </span>
                           )}
                         </td>
-                        <td className="px-10 py-8 last:rounded-r-[32px] border-y border-r border-white/5 max-w-[350px]">
-                          <p className="text-[12px] font-bold text-slate-600 italic leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all group-hover:text-slate-400">
-                            {item.notes || 'Signal pattern matches global standards.'}
+                        <td className="px-10 py-7 last:rounded-r-[28px] border-y border-r border-white/5 max-w-[320px]">
+                          <p className="text-[11px] font-bold text-slate-600 italic leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all group-hover:text-slate-400">
+                            {item.notes || 'Signal integrity confirmed.'}
                           </p>
                         </td>
                       </tr>
@@ -379,7 +373,7 @@ const App: React.FC = () => {
           </div>
 
           {error && (
-            <div className="m-12 p-8 bg-red-600/10 border border-red-600/30 rounded-[35px] text-red-500 text-xs font-black uppercase tracking-[0.4em] flex items-center gap-6 animate-bounce shadow-3xl">
+            <div className="m-10 p-8 bg-red-600/10 border border-red-600/30 rounded-[30px] text-red-500 text-[11px] font-black uppercase tracking-[0.4em] flex items-center gap-6 animate-bounce shadow-3xl">
               <div className="bg-red-600 p-3 rounded-2xl shadow-xl">
                  <XCircle className="w-6 h-6 text-white" />
               </div>
@@ -389,50 +383,32 @@ const App: React.FC = () => {
         </section>
       </main>
 
-      {/* Cyberpunk Footer */}
-      <footer className="py-32 px-12 border-t border-white/10 bg-[#020617] mt-20 relative overflow-hidden">
-        <div className="max-w-screen-2xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-20 relative z-10">
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-5 mb-10">
-              <div className="bg-blue-600 p-3 rounded-2xl shadow-2xl">
-                <ShieldCheck className="text-white w-8 h-8" />
-              </div>
-              <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">ER <span className="text-red-600">GROUP</span></h2>
+      {/* Cyber Footer */}
+      <footer className="py-24 px-12 border-t border-white/5 bg-[#020617] mt-20 relative overflow-hidden">
+        <div className="max-w-screen-2xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12 relative z-10">
+          <div className="flex flex-col gap-6 max-w-xl">
+            <div className="flex items-center gap-5">
+              <ShieldCheck className="text-blue-500 w-8 h-8" />
+              <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">ER <span className="text-blue-500">GROUP</span></h2>
             </div>
-            <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-[0.2em] max-w-xl">
-              Proprietary AI signal auditing node. Secured by ER Intelligence. 
-              Global standard verification for telecommunications patterns. 
-              Efficiency. Reliability. Privacy.
+            <p className="text-xs font-bold text-slate-700 leading-relaxed uppercase tracking-[0.3em]">
+              Proprietary AI telecommunications auditing architecture. Managed by ER Intelligence. 
+              Efficiency. Reliability. Precision.
             </p>
           </div>
           
-          <div>
-            <h4 className="text-[12px] font-black text-white uppercase tracking-[0.6em] mb-12 text-slate-500">Resource Nodes</h4>
-            <div className="grid grid-cols-1 gap-6">
-              {ER_TOOLS.map(tool => (
-                <a key={tool.name} href={tool.url} className="text-[11px] font-bold text-slate-700 hover:text-blue-500 transition-all uppercase tracking-widest flex items-center gap-3 group">
-                   <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -translate-x-3 group-hover:translate-x-0" />
-                   {tool.name}
-                </a>
-              ))}
+          <div className="text-right flex flex-col gap-6">
+            <div className="flex items-center justify-end gap-5 group">
+              <span className="text-[10px] font-bold text-slate-700 group-hover:text-slate-500 transition-colors uppercase tracking-[0.3em]">Mainframe: SECURED</span>
+              <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_15px_#22c55e]"></div>
             </div>
-          </div>
-
-          <div className="text-right">
-            <h4 className="text-[12px] font-black text-slate-500 uppercase tracking-[0.6em] mb-12">System Integrity</h4>
-            <div className="space-y-8">
-              <div className="flex items-center justify-end gap-5 group">
-                <span className="text-[11px] font-bold text-slate-700 group-hover:text-slate-400 transition-colors uppercase tracking-[0.2em]">Signal Node: SECURED</span>
-                <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_15px_#22c55e]"></div>
-              </div>
-              <div className="flex items-center justify-end gap-5 group">
-                <span className="text-[11px] font-bold text-slate-700 group-hover:text-slate-400 transition-colors uppercase tracking-[0.2em]">Audit Speed: TURBO</span>
-                <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_15px_#22c55e]"></div>
-              </div>
-              <p className="text-[11px] font-black text-slate-900 mt-20 uppercase tracking-[1em] select-none">
-                © 2024-2025 ER GROUP
-              </p>
+            <div className="flex items-center justify-end gap-5 group">
+              <span className="text-[10px] font-bold text-slate-700 group-hover:text-slate-500 transition-colors uppercase tracking-[0.3em]">Audit Node: ACTIVE</span>
+              <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_15px_#22c55e]"></div>
             </div>
+            <p className="text-[10px] font-black text-slate-900 mt-10 uppercase tracking-[1em] select-none">
+              © 2024-2025 ER GROUP
+            </p>
           </div>
         </div>
       </footer>
@@ -442,13 +418,13 @@ const App: React.FC = () => {
           100% { transform: translateX(100%); }
         }
         .animate-shimmer { animation: shimmer 2s infinite; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 20px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,0.4); }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,0.3); }
         .animate-in { animation: slideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes slideIn {
-          from { opacity: 0; transform: translateY(40px) scale(0.97); }
+          from { opacity: 0; transform: translateY(40px) scale(0.98); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}} />
